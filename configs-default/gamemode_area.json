@@ -1,0 +1,10 @@
+{
+  "creative_chain_enabled": true,
+  "enforce_survival_outside": true,
+  "banned_items": [
+    "minecraft:bedrock",
+    "minecraft:barrier",
+    "minecraft:structure_block",
+    "minecraft:tnt"
+  ]
+}

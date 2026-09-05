@@ -1,0 +1,39 @@
+{
+  "$schema": "https://cdn.jsdelivr.net/gh/DogeLakeDev/ScriptsForMinecraftServer@latest/modules/sdk/%40sfmc-sdk/schemas/sapi-manifest.v2.schema.json",
+  "schemaVersion": 2,
+  "id": "gamemode-area",
+  "name": "区域游戏模式",
+  "configKey": "gamemode_area",
+  "enabledByDefault": true,
+  "canDisable": true,
+  "requires": ["area", "inventory-switcher"],
+  "permissions": [
+    "config:read:gamemode_area",
+    "config:write:gamemode_area",
+    "service:gamemode.setCreativeChainEnabled",
+    "service:gamemode.isCreativeChainEnabled"
+  ],
+  "services": {
+    "provides": [
+      {
+        "name": "gamemode.setCreativeChainEnabled",
+        "input": { "type": "object" },
+        "output": { "type": "object" }
+      },
+      {
+        "name": "gamemode.isCreativeChainEnabled",
+        "input": { "type": "object" },
+        "output": { "type": "object" }
+      }
+    ],
+    "requires": [
+      { "name": "area.registerFeature" },
+      { "name": "area.byPoint" },
+      { "name": "inventory.switch" },
+      { "name": "inventory.has" },
+      { "name": "inventory.clear" },
+      { "name": "inventory.restore" }
+    ]
+  },
+  "notes": "area.registerFeature(gamemode)；进出 inventory.switch 隔离；下线/死亡/异常移出安全还原。"
+}
