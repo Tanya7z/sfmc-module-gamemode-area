@@ -87,10 +87,12 @@ function hasSandboxMark(player: Player): boolean {
 function markSandbox(player: Player, on: boolean): void {
   try {
     if (on) {
-      if (!player.hasTag(TAG_CREATIVE_SANDBOX)) player.addTag(TAG_CREATIVE_SANDBOX);
+      if (!player.hasTag(TAG_CREATIVE_SANDBOX))
+        player.addTag(TAG_CREATIVE_SANDBOX);
       creativeSandbox.add(player.id);
     } else {
-      if (player.hasTag(TAG_CREATIVE_SANDBOX)) player.removeTag(TAG_CREATIVE_SANDBOX);
+      if (player.hasTag(TAG_CREATIVE_SANDBOX))
+        player.removeTag(TAG_CREATIVE_SANDBOX);
       creativeSandbox.delete(player.id);
     }
   } catch (err) {
@@ -102,7 +104,11 @@ function markSandbox(player: Player, on: boolean): void {
   }
 }
 
-async function invSwitch(playerId: string, fromSlotKey: string, toSlotKey: string): Promise<boolean> {
+async function invSwitch(
+  playerId: string,
+  fromSlotKey: string,
+  toSlotKey: string,
+): Promise<boolean> {
   try {
     const res = (await service.call("inventory.switch", {
       playerId,
@@ -178,7 +184,10 @@ async function enterCreativeSandbox(player: Player): Promise<void> {
  * 离开创造沙箱：创造 → 生存槽，切回生存。
  * 用于正常出区、死亡、下线与异常移出。幂等：无沙箱标记则跳过 switch。
  */
-async function leaveCreativeSandbox(player: Player, opts?: { silent?: boolean }): Promise<void> {
+async function leaveCreativeSandbox(
+  player: Player,
+  opts?: { silent?: boolean },
+): Promise<void> {
   if (!hasSandboxMark(player)) {
     creativeSandbox.delete(player.id);
     return;
@@ -312,7 +321,9 @@ async function loadConfig(): Promise<void> {
 
   const banned = await config.get<unknown>("banned_items");
   if (Array.isArray(banned)) {
-    bannedItems = banned.filter((x): x is string => typeof x === "string" && x.length > 0);
+    bannedItems = banned.filter(
+      (x): x is string => typeof x === "string" && x.length > 0,
+    );
   }
 }
 
@@ -322,7 +333,11 @@ function registerFeatureSlot(): void {
       id: FEATURE_ID,
       handler: {
         id: FEATURE_ID,
-        onEnter(player: Player, _ctx: unknown, params: Record<string, unknown>) {
+        onEnter(
+          player: Player,
+          _ctx: unknown,
+          params: Record<string, unknown>,
+        ) {
           void handleFeatureEnter(player, params ?? {}).catch((err) => {
             debug.w(
               "GamemodeArea",
@@ -330,7 +345,11 @@ function registerFeatureSlot(): void {
             );
           });
         },
-        onLeave(player: Player, _ctx: unknown, params: Record<string, unknown>) {
+        onLeave(
+          player: Player,
+          _ctx: unknown,
+          params: Record<string, unknown>,
+        ) {
           void handleFeatureLeave(player, params ?? {}).catch((err) => {
             debug.w(
               "GamemodeArea",
@@ -356,9 +375,6 @@ ModuleRegistry.register({
       // 设计：bypass=OP(3)→Admin；place_banned=Admin(2)→OP
       Permission.register(PERM_BYPASS, Permission.Admin);
       Permission.register(PERM_PLACE_BANNED, Permission.OP);
-    },
-    registerCommands() {
-      // 无玩家命令面
     },
     registerEvents() {
       // 禁放拦截（创造沙箱内）
@@ -397,17 +413,19 @@ ModuleRegistry.register({
       });
 
       // 死亡：安全还原模式与背包，防止创造物外泄
-      const dieCb = world.afterEvents.entityDie.subscribe((ev: EntityDieAfterEvent) => {
-        const ent = ev.deadEntity;
-        if (!(ent instanceof Player)) return;
-        if (!hasSandboxMark(ent)) return;
-        void leaveCreativeSandbox(ent, { silent: true }).catch((err) => {
-          debug.w(
-            "GamemodeArea",
-            `death restore: ${err instanceof Error ? err.message : String(err)}`,
-          );
-        });
-      });
+      const dieCb = world.afterEvents.entityDie.subscribe(
+        (ev: EntityDieAfterEvent) => {
+          const ent = ev.deadEntity;
+          if (!(ent instanceof Player)) return;
+          if (!hasSandboxMark(ent)) return;
+          void leaveCreativeSandbox(ent, { silent: true }).catch((err) => {
+            debug.w(
+              "GamemodeArea",
+              `death restore: ${err instanceof Error ? err.message : String(err)}`,
+            );
+          });
+        },
+      );
       eventCleanups.push(() => {
         try {
           world.afterEvents.entityDie.unsubscribe(dieCb);
@@ -417,16 +435,18 @@ ModuleRegistry.register({
       });
 
       // 下线前尽早还原（area 也会 onLeave；此处双保险）
-      const leaveCb = world.beforeEvents.playerLeave.subscribe((ev: PlayerLeaveBeforeEvent) => {
-        const player = ev.player;
-        if (!hasSandboxMark(player)) return;
-        void leaveCreativeSandbox(player, { silent: true }).catch((err) => {
-          debug.w(
-            "GamemodeArea",
-            `leave restore: ${err instanceof Error ? err.message : String(err)}`,
-          );
-        });
-      });
+      const leaveCb = world.beforeEvents.playerLeave.subscribe(
+        (ev: PlayerLeaveBeforeEvent) => {
+          const player = ev.player;
+          if (!hasSandboxMark(player)) return;
+          void leaveCreativeSandbox(player, { silent: true }).catch((err) => {
+            debug.w(
+              "GamemodeArea",
+              `leave restore: ${err instanceof Error ? err.message : String(err)}`,
+            );
+          });
+        },
+      );
       eventCleanups.push(() => {
         try {
           world.beforeEvents.playerLeave.unsubscribe(leaveCb);
@@ -436,24 +456,26 @@ ModuleRegistry.register({
       });
 
       // 重登孤儿恢复 / 死亡后若仍在创造区则重新进入
-      const spawnCb = world.afterEvents.playerSpawn.subscribe((ev: PlayerSpawnAfterEvent) => {
-        const player = ev.player;
-        void (async () => {
-          if (!creativeChainEnabled) return;
-          const inCreative = await isInCreativeArea(player);
-          if (inCreative) {
-            await enterCreativeSandbox(player);
-            return;
-          }
-          await orphanRestoreIfNeeded(player);
-          await enforceOutsideIfNeeded(player);
-        })().catch((err) => {
-          debug.w(
-            "GamemodeArea",
-            `spawn: ${err instanceof Error ? err.message : String(err)}`,
-          );
-        });
-      });
+      const spawnCb = world.afterEvents.playerSpawn.subscribe(
+        (ev: PlayerSpawnAfterEvent) => {
+          const player = ev.player;
+          void (async () => {
+            if (!creativeChainEnabled) return;
+            const inCreative = await isInCreativeArea(player);
+            if (inCreative) {
+              await enterCreativeSandbox(player);
+              return;
+            }
+            await orphanRestoreIfNeeded(player);
+            await enforceOutsideIfNeeded(player);
+          })().catch((err) => {
+            debug.w(
+              "GamemodeArea",
+              `spawn: ${err instanceof Error ? err.message : String(err)}`,
+            );
+          });
+        },
+      );
       eventCleanups.push(() => {
         try {
           world.afterEvents.playerSpawn.unsubscribe(spawnCb);
