@@ -5,9 +5,9 @@ Wave C official SFMC module: **gamemode-area**（区域游戏模式切换与背�
 ## Develop
 
 ```bash
-npm install
-npm run typecheck
-npm test
+pnpm install
+pnpm run typecheck
+pnpm run test
 ```
 
 Install into platform:
