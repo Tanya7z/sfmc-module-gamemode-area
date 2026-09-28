@@ -1,6 +1,6 @@
 {
   "name": "@sfmc-bds/module-gamemode-area",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "packageManager": "pnpm@10.8.0",
   "type": "module",
   "description": "SAPI module: 区域游戏模式切换与背包隔离",
@@ -51,4 +51,3 @@
     "node": ">=22.13.0"
   }
 }
-
